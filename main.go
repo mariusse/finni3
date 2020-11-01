@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -18,9 +19,9 @@ var (
 func main() {
 	r, err := http.Get(searchURI)
 	check(err)
-	
+
 	today := time.Now().Format("2006-01-02")
-	fmt.Println(today)	
+	fmt.Println(today)
 
 	b, err := ioutil.ReadAll(r.Body)
 	check(err)
@@ -35,15 +36,45 @@ func main() {
 	adList := removeDuplicates(adIDs)
 	trimText(adList)
 	sort.Strings(adList)
-	
+
 	listings := map[string](string){}
 	for _, kode := range adList {
 		listings[kode] = getPrice(kode)
 		// fmt.Println(kode + " " + getPrice(kode))
 	}
-	
+	listToFile(listings)
+
 }
 
+func listToFile(listings map[string](string)) {
+	filename := "myfile"
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	defer f.Close()
+	check(err)
+
+	sortedAdList := []string{}
+	for k := range listings {
+		sortedAdList = append(sortedAdList, k)
+	}
+	
+	sort.Strings(sortedAdList)
+	
+	for i, ad := range sortedAdList {
+		f.Write([]byte(ad + "\t"))
+		if i == len(sortedAdList) -1 {
+			f.Write([]byte("\n"))
+		}
+	}
+	
+	for i, v := range sortedAdList {
+		f.Write([]byte(listings[v] + "\t\t"))
+		if i == len(sortedAdList) -1 {
+			f.Write([]byte("\n"))
+		}
+	}
+	
+
+}
 
 func trimText(list []string) {
 	for i, v := range list {
@@ -58,7 +89,7 @@ func removeDuplicates(xs []string) []string {
 			unique[v] = "present"
 		}
 	}
-	
+
 	list := []string{}
 	for k := range unique {
 		list = append(list, k)
@@ -68,7 +99,7 @@ func removeDuplicates(xs []string) []string {
 
 func getPrice(finnKode string) string {
 	adURL := fmt.Sprintf("https://www.finn.no/car/used/ad.html?finnkode=%s", finnKode)
-	
+
 	r, err := http.Get(adURL)
 	if err != nil {
 		log.Fatalf("error getting ad: %e", err)
@@ -77,15 +108,15 @@ func getPrice(finnKode string) string {
 	if err != nil {
 		log.Fatalf("error reading body: %e", err)
 	}
-	
+
 	if strings.Contains(string(b), "SOLGT") {
 		return "SOLGT"
 	}
-	
+
 	re := regexp.MustCompile(`[0-9]{3}.[0-9]{3}\skr`)
-	
+
 	price := re.FindAllString(string(b), 1)[0]
-	
+
 	return trimWhiteSpaceAndKR(price)
 }
 
