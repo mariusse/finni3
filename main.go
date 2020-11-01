@@ -34,7 +34,7 @@ func main() {
 	sort.Strings(list)
 	
 	for _, kode := range list {
-		fmt.Println(kode + " " + strings.Replace(getPrice(kode), " ", "", -1))
+		fmt.Println(kode + " " + getPrice(kode))
 	}
 	
 }
