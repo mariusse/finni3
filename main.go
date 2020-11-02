@@ -14,14 +14,12 @@ import (
 
 var (
 	searchURI = "https://www.finn.no/car/used/search.html?location=20061&location=22030&location=22038&make=0.749&model=1.749.2000264&price_from=100000&q=120+fully&sort=0&year_from=2019"
+	filename = "output"
 )
 
 func main() {
 	r, err := http.Get(searchURI)
 	check(err)
-
-	today := time.Now().Format("2006-01-02")
-	fmt.Println(today)
 
 	b, err := ioutil.ReadAll(r.Body)
 	check(err)
@@ -51,6 +49,9 @@ func listToFile(listings map[string](string)) {
 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer f.Close()
 	check(err)
+	
+	today := time.Now().Format("2006-01-02")
+	f.Write([]byte(today + "\n"))
 
 	sortedAdList := []string{}
 	for k := range listings {
