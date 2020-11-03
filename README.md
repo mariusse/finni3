@@ -1,1 +1,1 @@
-Putter finn-kode og pris fra `searchURI` i `output`-fil
+Putter finn-koder og pris fra `searchURI` i `output`-fil
